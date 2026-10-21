@@ -7,11 +7,7 @@ struct ModelTests {
     let context: ModelContext
 
     init() throws {
-        let container = try ModelContainer(
-            for: Category.self, Session.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        context = ModelContext(container)
+        context = ModelContext(try SwingStore.makeContainer(inMemory: true))
     }
 
     @Test func sessionIsSavedAndLoaded() throws {

@@ -5,3 +5,4 @@ DerivedData/
 .build/
 .swiftpm/
 CLAUDE.md
+docs/BUILD_PLAN.md

@@ -1,17 +1,32 @@
+import SwiftData
 import SwiftUI
 import SwingKit
 
 /// The menu bar panel's content.
 struct PanelView: View {
-    let tracker: TemporaryTracker
+    let state: PanelState
     let openMainWindow: () -> Void
+    /// Called when the content changes height, so the panel can resize
+    let contentResized: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            TimerText(start: tracker.start)
+        @Bindable var state = state
 
-            Button(tracker.isRunning ? "Stop" : "Start") {
-                tracker.startOrStop()
+        VStack(spacing: 12) {
+            TimerText(start: state.tracking.current?.start)
+
+            if let problem = state.problem {
+                Text(problem)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
+
+            TextField("What are you working on?", text: $state.note)
+                .textFieldStyle(.roundedBorder)
+
+            Button(state.tracking.isRunning ? "Stop" : "Start") {
+                if state.tracking.isRunning { state.stop() } else { state.start() }
             }
             .keyboardShortcut(.defaultAction)
             .controlSize(.large)
@@ -23,6 +38,7 @@ struct PanelView: View {
         }
         .padding()
         .frame(width: 260)
+        .onChange(of: state.problem) { contentResized() }
     }
 }
 
@@ -48,5 +64,7 @@ private struct TimerText: View {
 }
 
 #Preview {
-    PanelView(tracker: TemporaryTracker(), openMainWindow: {})
+    let container = try! SwingStore.makeContainer(inMemory: true)
+    let tracking = try! TrackingService(context: container.mainContext, deviceName: "Preview Mac")
+    PanelView(state: PanelState(tracking: tracking), openMainWindow: {}, contentResized: {})
 }

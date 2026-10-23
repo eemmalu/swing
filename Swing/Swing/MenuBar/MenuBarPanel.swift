@@ -29,7 +29,7 @@ final class MenuBarPanel: NSPanel {
         contentView = background
     }
 
-    /// Lets the borderless panel take keyboard input.
+    /// Lets the panel take keyboard input.
     override var canBecomeKey: Bool { true }
 
     /// Closes the panel on Esc.
@@ -57,6 +57,14 @@ final class MenuBarPanel: NSPanel {
         makeKeyAndOrderFront(nil)
         invalidateShadow()
         closeOnClickOutside(except: itemWindow)
+    }
+
+    /// Resizes the panel to fit its content, keeping the top edge in place
+    func fitContent() {
+        let top = frame.maxY
+        setContentSize(hosting.fittingSize)
+        setFrameOrigin(NSPoint(x: frame.minX, y: top - frame.height))
+        invalidateShadow()
     }
 
     /// Closes the panel on a click anywhere else or a switch to another app.

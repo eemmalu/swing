@@ -6,16 +6,30 @@ import SwiftUI
 final class MenuBarController: NSObject {
     // The icon in the menu bar
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    private let panel: MenuBarPanel
+    private let state: PanelState
+    private let openMainWindow: () -> Void
+    private lazy var panel: MenuBarPanel = MenuBarPanel(content: PanelView(
+        state: state,
+        openMainWindow: { [weak self] in
+            self?.panel.close()
+            self?.openMainWindow()
+        },
+        contentResized: { [weak self] in
+            // Waits for the new content to be laid out
+            DispatchQueue.main.async { self?.panel.fitContent() }
+        }
+    ))
 
-    init(tracker: TemporaryTracker, openMainWindow: @escaping () -> Void) {
-        var closePanel: () -> Void = {}
-        panel = MenuBarPanel(content: PanelView(tracker: tracker, openMainWindow: {
-            closePanel()
-            openMainWindow()
-        }))
+    init(state: PanelState, openMainWindow: @escaping () -> Void) {
+        self.state = state
+        self.openMainWindow = openMainWindow
         super.init()
-        closePanel = { [weak self] in self?.panel.close() }
+
+        // When the panel is about to close, save the current note
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(panelWillClose),
+            name: NSWindow.willCloseNotification, object: panel
+        )
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Swing")
@@ -26,6 +40,10 @@ final class MenuBarController: NSObject {
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
             self?.togglePanel()
         }
+    }
+
+    @objc private func panelWillClose() {
+        state.saveNote()
     }
 
     @objc private func togglePanel() {

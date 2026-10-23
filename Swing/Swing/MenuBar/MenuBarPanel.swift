@@ -55,6 +55,7 @@ final class MenuBarPanel: NSPanel {
         }
         setFrameOrigin(origin)
         makeKeyAndOrderFront(nil)
+        makeFirstResponder(nil)
         invalidateShadow()
         closeOnClickOutside(except: itemWindow)
     }

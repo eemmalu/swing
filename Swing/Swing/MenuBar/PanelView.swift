@@ -8,6 +8,7 @@ struct PanelView: View {
     let openMainWindow: () -> Void
     /// Called when the content changes height, so the panel can resize
     let contentResized: () -> Void
+    @FocusState private var noteFocused: Bool
 
     var body: some View {
         @Bindable var state = state
@@ -24,6 +25,8 @@ struct PanelView: View {
 
             TextField("What are you working on?", text: $state.note)
                 .textFieldStyle(.roundedBorder)
+                .focused($noteFocused)
+                .onSubmit { noteFocused = false }
 
             Button(state.tracking.isRunning ? "Stop" : "Start") {
                 if state.tracking.isRunning { state.stop() } else { state.start() }
@@ -38,6 +41,11 @@ struct PanelView: View {
         }
         .padding()
         .frame(width: 260)
+        .background {
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { noteFocused = false }
+        }
         .onChange(of: state.problem) { contentResized() }
     }
 }

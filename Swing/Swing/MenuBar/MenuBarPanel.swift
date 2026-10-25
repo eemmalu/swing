@@ -9,7 +9,7 @@ final class MenuBarPanel: NSPanel {
 
     init(content: some View) {
         hosting = NSHostingView(rootView: content)
-        super.init(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: true)
+        super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true
@@ -40,7 +40,7 @@ final class MenuBarPanel: NSPanel {
     override func close() {
         monitors.forEach(NSEvent.removeMonitor)
         monitors = []
-        NotificationCenter.default.removeObserver(self, name: NSApplication.didResignActiveNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.removeObserver(self, name: NSWorkspace.didActivateApplicationNotification, object: nil)
         super.close()
     }
 
@@ -84,14 +84,15 @@ final class MenuBarPanel: NSPanel {
         }) {
             monitors.append(monitor)
         }
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(appResignedActive),
-            name: NSApplication.didResignActiveNotification, object: nil
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(appActivated),
+            name: NSWorkspace.didActivateApplicationNotification, object: nil
         )
     }
 
-    @objc private func appResignedActive() {
-        close()
+    @objc private func appActivated(_ notification: Notification) {
+        let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+        if app != .current { close() }
     }
 
     /// A rounded-rectangle mask whose corners keep their radius at any size.

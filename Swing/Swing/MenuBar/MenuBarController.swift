@@ -52,8 +52,6 @@ final class MenuBarController: NSObject {
         if panel.isVisible {
             panel.close()
         } else {
-            // Lets the panel take keyboard input.
-            NSApp.activate()
             let icon = itemWindow.convertToScreen(
                 button.convert(button.cell?.imageRect(forBounds: button.bounds) ?? button.bounds, to: nil)
             )

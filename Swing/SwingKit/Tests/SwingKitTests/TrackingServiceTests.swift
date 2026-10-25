@@ -124,24 +124,34 @@ struct TrackingServiceTests {
         #expect(service.current?.category === design)
     }
 
-    @Test func changeCategoryWhileRunningStartsNewSession() throws {
+    @Test func changeCategoryWhileRunningMovesSession() throws {
         let design = Category(name: "Design")
         context.insert(design)
         let service = try makeService()
+        let start = clock.now
         try service.start()
         try service.setNote("Logo sketches")
         clock.advance(minutes: 45)
         try service.changeCategory(to: design)
 
         let sessions = try allSessions()
-        #expect(sessions.count == 2)
-        #expect(sessions[0].end == clock.now)
-        #expect(sessions[0].category == nil)
+        #expect(sessions.count == 1)
+        #expect(sessions[0] === service.current)
+        #expect(sessions[0].start == start)
+        #expect(sessions[0].end == nil)
+        #expect(sessions[0].category === design)
         #expect(sessions[0].note == "Logo sketches")
-        #expect(sessions[1].start == clock.now)
-        #expect(sessions[1].category === design)
-        #expect(sessions[1].note == nil)
-        #expect(service.current === sessions[1])
+        #expect(service.selectedCategory === design)
+    }
+
+    @Test func changeCategoryWhileRunningIsSaved() throws {
+        let design = Category(name: "Design")
+        context.insert(design)
+        let service = try makeService()
+        try service.start()
+        try service.changeCategory(to: design)
+
+        #expect(!context.hasChanges)
     }
 
     @Test func changeToSameCategoryKeepsSession() throws {
@@ -205,18 +215,6 @@ struct TrackingServiceTests {
 
         #expect(service.current?.note == "Logo sketches")
         #expect(service.current?.category === design)
-    }
-
-    @Test func changeCategoryWhileRunningDoesNotReuseNextNote() throws {
-        let design = Category(name: "Design")
-        context.insert(design)
-        let service = try makeService()
-        try service.setNote("Logo sketches")
-        try service.start()
-        try service.changeCategory(to: design)
-
-        #expect(service.current?.category === design)
-        #expect(service.current?.note == nil)
     }
 
     @Test func stopLeavesNoNextNote() throws {

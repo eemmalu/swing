@@ -58,6 +58,7 @@ final class MenuBarController: NSObject {
                 button.convert(button.cell?.imageRect(forBounds: button.bounds) ?? button.bounds, to: nil)
             )
             let anchor = NSRect(x: icon.minX, y: itemWindow.frame.minY, width: icon.width, height: 0)
+            state.refreshCategories()
             panel.show(below: anchor, on: itemWindow.screen, itemWindow: itemWindow)
         }
     }

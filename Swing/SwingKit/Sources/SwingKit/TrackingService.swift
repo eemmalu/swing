@@ -45,13 +45,12 @@ public final class TrackingService {
         try context.save()
     }
 
-    // While running, ends the session and starts a new one with an empty note
     public func changeCategory(to category: Category?) throws {
         guard category !== selectedCategory else { return }
         selectedCategory = category
-        if isRunning {
-            try start()
-        }
+        guard let current else { return }
+        current.category = category
+        try context.save()
     }
 
     // Sets the running session's note, or the next note while stopped. Text that is empty or only spaces clears it

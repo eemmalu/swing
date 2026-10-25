@@ -25,7 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let container = try SwingStore.makeContainer()
             self.container = container
             log.info("Store opened at \(container.configurations.first?.url.path ?? "?", privacy: .public)")
-            return PanelState(tracking: try TrackingService(context: container.mainContext, deviceName: deviceName))
+            let tracking = try TrackingService(context: container.mainContext, deviceName: deviceName)
+            return PanelState(tracking: tracking, context: container.mainContext)
         } catch {
             log.error("Couldn't open the store: \(error, privacy: .public)")
         }
@@ -33,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let container = try SwingStore.makeContainer(inMemory: true)
             self.container = container
             let tracking = try TrackingService(context: container.mainContext, deviceName: deviceName)
-            return PanelState(tracking: tracking, storeUnavailable: true)
+            return PanelState(tracking: tracking, context: container.mainContext, storeUnavailable: true)
         } catch {
             fatalError("Couldn't open an in-memory store: \(error)")
         }

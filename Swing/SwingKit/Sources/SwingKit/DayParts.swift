@@ -2,7 +2,6 @@ import Foundation
 
 // The part of a session that falls on one calendar day
 public struct DayPart: Equatable {
-    // Start of the day this part falls on
     public let day: Date
     public let start: Date
     public let end: Date
@@ -16,15 +15,20 @@ public struct DayPart: Equatable {
     public var duration: TimeInterval { end.timeIntervalSince(start) }
 }
 
-// Splits the time from `start` to `end`, or to `now` while running, at each local midnight. Empty when it ends before it starts
-public func dayParts(start: Date, end: Date?, now: Date = .now, calendar: Calendar = .current) -> [DayPart] {
-    let end = end ?? now
+/// Takes in a session's start and end time, its list of breaks, and the current time. 
+/// Parses the session into working spans and splits them into day parts if they span multiple days.
+/// Returns a list of `DayPart` structs representing the parts of the session that fall on each calendar day.
+public func dayParts(
+    start: Date, end: Date?, breaks: [SessionBreak] = [], now: Date = .now, calendar: Calendar = .current
+) -> [DayPart] {
     var parts: [DayPart] = []
-    var partStart = start
-    while partStart < end, let day = calendar.dateInterval(of: .day, for: partStart) {
-        let partEnd = min(day.end, end)
-        parts.append(DayPart(day: day.start, start: partStart, end: partEnd))
-        partStart = partEnd
+    for span in workedSpans(start: start, end: end, breaks: breaks, now: now) {
+        var partStart = span.start
+        while partStart < span.end, let day = calendar.dateInterval(of: .day, for: partStart) {
+            let partEnd = min(day.end, span.end)
+            parts.append(DayPart(day: day.start, start: partStart, end: partEnd))
+            partStart = partEnd
+        }
     }
     return parts
 }

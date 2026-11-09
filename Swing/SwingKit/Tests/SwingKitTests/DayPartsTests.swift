@@ -84,4 +84,33 @@ struct DayPartsTests {
         let total = dayParts(start: start, end: end, calendar: calendar).map(\.duration).reduce(0, +)
         #expect(total == elapsedTime(start: start, end: end))
     }
+
+    @Test func breakSplitsADayIntoParts() {
+        let breaks = [SessionBreak(start: date(2026, 5, 4, 12), end: date(2026, 5, 4, 13))]
+        let parts = dayParts(start: date(2026, 5, 4, 9), end: date(2026, 5, 4, 17), breaks: breaks, calendar: calendar)
+        #expect(parts == [
+            DayPart(day: date(2026, 5, 4), start: date(2026, 5, 4, 9), end: date(2026, 5, 4, 12)),
+            DayPart(day: date(2026, 5, 4), start: date(2026, 5, 4, 13), end: date(2026, 5, 4, 17)),
+        ])
+    }
+
+    @Test func breakAcrossMidnightLeavesOnePartEachDay() {
+        let breaks = [SessionBreak(start: date(2026, 5, 4, 23), end: date(2026, 5, 5, 1))]
+        let parts = dayParts(start: date(2026, 5, 4, 22), end: date(2026, 5, 5, 2), breaks: breaks, calendar: calendar)
+        #expect(parts == [
+            DayPart(day: date(2026, 5, 4), start: date(2026, 5, 4, 22), end: date(2026, 5, 4, 23)),
+            DayPart(day: date(2026, 5, 5), start: date(2026, 5, 5, 1), end: date(2026, 5, 5, 2)),
+        ])
+    }
+
+    @Test func partsWithBreaksAddUpToElapsedTime() {
+        let start = date(2026, 10, 24, 21, 15)
+        let end = date(2026, 10, 27, 8, 40)
+        let breaks = [
+            SessionBreak(start: date(2026, 10, 24, 23, 30), end: date(2026, 10, 25, 7)),
+            SessionBreak(start: date(2026, 10, 26, 12), end: date(2026, 10, 26, 12, 45)),
+        ]
+        let total = dayParts(start: start, end: end, breaks: breaks, calendar: calendar).map(\.duration).reduce(0, +)
+        #expect(total == elapsedTime(start: start, end: end, breaks: breaks))
+    }
 }

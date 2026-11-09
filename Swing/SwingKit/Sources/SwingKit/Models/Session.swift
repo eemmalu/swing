@@ -12,6 +12,9 @@ public final class Session {
     public var note: String?
     /// The device the session was tracked on (mac or iphone)
     public var deviceName: String = ""
+    /// Deleting the session deletes its breaks
+    @Relationship(deleteRule: .cascade, inverse: \SessionBreak.session)
+    public var breaks: [SessionBreak]? = []
 
     public init(start: Date, end: Date? = nil, category: Category? = nil, note: String? = nil, deviceName: String) {
         self.start = start

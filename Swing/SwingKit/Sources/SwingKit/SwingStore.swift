@@ -4,7 +4,7 @@ import SwiftData
 /// Opens the SwiftData store that holds user session data
 public enum SwingStore {
     public static let appGroupID = "group.com.emmalu.swing"
-    public static let schema = Schema([Category.self, Session.self])
+    public static let schema = Schema([Category.self, Session.self, SessionBreak.self])
 
     /// Opens the store in the App Group folder, or an empty in-memory one for tests and previews
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {

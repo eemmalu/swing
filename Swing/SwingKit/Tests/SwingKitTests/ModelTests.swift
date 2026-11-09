@@ -56,4 +56,30 @@ struct ModelTests {
         #expect(loaded.count == 1)
         #expect(loaded.first?.category == nil)
     }
+
+    @Test func breakIsSavedWithItsSession() throws {
+        let start = Date(timeIntervalSinceReferenceDate: 9 * 3600)
+        let session = Session(start: start, deviceName: "Test Mac")
+        context.insert(session)
+        let pause = SessionBreak(start: start + 600, end: start + 900)
+        pause.session = session
+        try context.save()
+
+        let loaded = try context.fetch(FetchDescriptor<Session>())
+        #expect(loaded.first?.breaks?.map(\.id) == [pause.id])
+        #expect(loaded.first?.breaks?.first?.end == start + 900)
+    }
+
+    @Test func deletingSessionDeletesItsBreaks() throws {
+        let session = Session(start: .now, deviceName: "Test Mac")
+        context.insert(session)
+        let pause = SessionBreak(start: .now)
+        pause.session = session
+        try context.save()
+
+        context.delete(session)
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<SessionBreak>()).isEmpty)
+    }
 }

@@ -4,6 +4,8 @@ import SwingKit
 
 struct ElapsedTimeTests {
     let nineAM = Date(timeIntervalSinceReferenceDate: 9 * 3600)
+    let minute: TimeInterval = 60
+    let hour: TimeInterval = 3600
 
     @Test func finishedSessionUsesItsEnd() {
         let end = nineAM.addingTimeInterval(90 * 60)
@@ -27,6 +29,43 @@ struct ElapsedTimeTests {
     @Test func endBeforeStartIsZero() {
         let end = nineAM.addingTimeInterval(-60)
         #expect(elapsedTime(start: nineAM, end: end) == 0)
+    }
+
+    @Test func breaksAreSubtracted() {
+        let end = nineAM + 3 * hour
+        let breaks = [
+            SessionBreak(start: nineAM + hour, end: nineAM + hour + 15 * minute),
+            SessionBreak(start: nineAM + 2 * hour, end: nineAM + 2 * hour + 30 * minute),
+        ]
+        #expect(elapsedTime(start: nineAM, end: end, breaks: breaks) == 3 * hour - 45 * minute)
+    }
+
+    @Test func breakWithNoEndLastsUntilNow() {
+        let breaks = [SessionBreak(start: nineAM + hour)]
+        let now = nineAM + 2 * hour
+        #expect(elapsedTime(start: nineAM, end: nil, breaks: breaks, now: now) == hour)
+    }
+
+    @Test func overlappingBreaksCountOnce() {
+        let breaks = [
+            SessionBreak(start: nineAM + 10 * minute, end: nineAM + 30 * minute),
+            SessionBreak(start: nineAM + 20 * minute, end: nineAM + 40 * minute),
+        ]
+        #expect(elapsedTime(start: nineAM, end: nineAM + hour, breaks: breaks) == 30 * minute)
+    }
+
+    @Test func breaksOutsideTheSessionOnlyCountTheirInsidePart() {
+        let breaks = [
+            SessionBreak(start: nineAM - hour, end: nineAM + 10 * minute),
+            SessionBreak(start: nineAM + 50 * minute, end: nineAM + 2 * hour),
+            SessionBreak(start: nineAM + 3 * hour, end: nineAM + 4 * hour),
+        ]
+        #expect(elapsedTime(start: nineAM, end: nineAM + hour, breaks: breaks) == 40 * minute)
+    }
+
+    @Test func breakCoveringTheWholeSessionLeavesZero() {
+        let breaks = [SessionBreak(start: nineAM, end: nineAM + hour)]
+        #expect(elapsedTime(start: nineAM, end: nineAM + hour, breaks: breaks) == 0)
     }
 }
 

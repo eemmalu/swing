@@ -226,4 +226,84 @@ struct TrackingServiceTests {
 
         #expect(service.current?.note == nil)
     }
+
+    @Test func pauseAndResumeAddBreak() throws {
+        let service = try makeService()
+        try service.start()
+        clock.advance(minutes: 20)
+        let pauseStart = clock.now
+        try service.pause()
+        #expect(service.isPaused)
+        #expect(service.isRunning)
+
+        clock.advance(minutes: 10)
+        try service.resume()
+        #expect(!service.isPaused)
+
+        let breaks = service.current?.breaks ?? []
+        #expect(breaks.count == 1)
+        #expect(breaks.first?.start == pauseStart)
+        #expect(breaks.first?.end == clock.now)
+        #expect(!context.hasChanges)
+
+        clock.advance(minutes: 5)
+        let session = try #require(service.current)
+        #expect(elapsedTime(start: session.start, end: nil, breaks: breaks, now: clock.now) == 25 * 60)
+    }
+
+    @Test func pauseWhileStoppedDoesNothing() throws {
+        let service = try makeService()
+        try service.pause()
+
+        #expect(!service.isPaused)
+        #expect(try context.fetch(FetchDescriptor<SessionBreak>()).isEmpty)
+    }
+
+    @Test func pauseTwiceKeepsOneBreak() throws {
+        let service = try makeService()
+        try service.start()
+        try service.pause()
+        clock.advance(minutes: 5)
+        try service.pause()
+
+        #expect(service.current?.breaks?.count == 1)
+    }
+
+    @Test func stopWhilePausedEndsBreak() throws {
+        let service = try makeService()
+        try service.start()
+        let session = try #require(service.current)
+        try service.pause()
+        clock.advance(minutes: 10)
+        try service.stop()
+
+        #expect(session.end == clock.now)
+        #expect(session.breaks?.first?.end == clock.now)
+        #expect(!service.isPaused)
+    }
+
+    @Test func startWhilePausedEndsBreakAndStartsUnpaused() throws {
+        let service = try makeService()
+        try service.start()
+        let first = try #require(service.current)
+        try service.pause()
+        clock.advance(minutes: 10)
+        try service.start()
+
+        #expect(first.breaks?.first?.end == clock.now)
+        #expect(service.current !== first)
+        #expect(!service.isPaused)
+    }
+
+    @Test func changeCategoryWhilePausedKeepsPause() throws {
+        let design = Category(name: "Design")
+        context.insert(design)
+        let service = try makeService()
+        try service.start()
+        try service.pause()
+        try service.changeCategory(to: design)
+
+        #expect(service.isPaused)
+        #expect(service.current?.category === design)
+    }
 }

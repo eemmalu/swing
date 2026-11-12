@@ -29,7 +29,7 @@ func workedSpans(start: Date, end: Date?, breaks: [SessionBreak], now: Date) -> 
     return spans
 }
 
-/// Elapsed time as the timer shows it, such as "1:02:05". Partial seconds are dropped.
+/// Elapsed time formatted as a string
 public func formattedElapsedTime(_ seconds: TimeInterval, locale: Locale = .autoupdatingCurrent) -> String {
     Duration.seconds(Int(max(0, seconds)))
         .formatted(.time(pattern: .hourMinuteSecond).locale(locale))

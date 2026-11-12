@@ -15,7 +15,7 @@ struct PanelView: View {
         @Bindable var state = state
 
         VStack(spacing: 12) {
-            TimerText(start: state.tracking.current?.start)
+            TimerText(session: state.tracking.current, paused: state.tracking.isPaused)
 
             if let problem = state.problem {
                 Text(problem)
@@ -39,12 +39,22 @@ struct PanelView: View {
                 .focused($noteFocused)
                 .onSubmit { noteFocused = false }
 
-            Button(state.tracking.isRunning ? "Stop" : "Start") {
-                noteFocused = false
-                if state.tracking.isRunning { state.stop() } else { state.start() }
+            HStack {
+                if state.tracking.isRunning {
+                    Button(state.tracking.isPaused ? "Resume" : "Pause") {
+                        noteFocused = false
+                        if state.tracking.isPaused { state.resume() } else { state.pause() }
+                    }
+                    .controlSize(.large)
+                }
+
+                Button(state.tracking.isRunning ? "Stop" : "Start") {
+                    noteFocused = false
+                    if state.tracking.isRunning { state.stop() } else { state.start() }
+                }
+                .keyboardShortcut(.defaultAction)
+                .controlSize(.large)
             }
-            .keyboardShortcut(.defaultAction)
-            .controlSize(.large)
 
             Divider()
 
@@ -145,14 +155,16 @@ private struct NewCategoryField: View {
     }
 }
 
-/// The elapsed time, re-determined each second from `start` while running.
+/// The elapsed time without breaks, re-determined each second from the session while running.
 private struct TimerText: View {
-    let start: Date?
+    let session: Session?
+    let paused: Bool
 
     var body: some View {
-        if let start {
-            TimelineView(.periodic(from: start, by: 1)) { context in
-                label(elapsedTime(start: start, end: nil, now: context.date))
+        if let session {
+            TimelineView(.periodic(from: session.start, by: 1)) { context in
+                label(elapsedTime(start: session.start, end: nil, breaks: session.breaks ?? [], now: context.date))
+                    .foregroundStyle(paused ? .secondary : .primary)
             }
         } else {
             label(0)

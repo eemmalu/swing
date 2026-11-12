@@ -12,6 +12,9 @@ public final class TrackingService {
     public private(set) var nextNote: String?
 
     public var isRunning: Bool { current != nil }
+    public var isPaused: Bool { openBreak != nil }
+
+    private var openBreak: SessionBreak? { current?.breaks?.first { $0.end == nil } }
 
     private let context: ModelContext
     private let deviceName: String
@@ -45,6 +48,21 @@ public final class TrackingService {
         try context.save()
     }
 
+    // Starts a break in the running session
+    public func pause() throws {
+        guard let current: Session, !isPaused else { return }
+        let pause = SessionBreak(start: now())
+        context.insert(pause)
+        pause.session = current
+        try context.save()
+    }
+
+    public func resume() throws {
+        guard let openBreak: SessionBreak else { return }
+        openBreak.end = now()
+        try context.save()
+    }
+
     public func changeCategory(to category: Category?) throws {
         guard category !== selectedCategory else { return }
         selectedCategory = category
@@ -70,6 +88,9 @@ public final class TrackingService {
 
     private func endRunningSessions(at time: Date) throws {
         for session in try runningSessions() {
+            for pause in session.breaks ?? [] where pause.end == nil {
+                pause.end = time
+            }
             session.end = time
         }
     }

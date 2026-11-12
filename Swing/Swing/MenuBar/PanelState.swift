@@ -48,15 +48,25 @@ final class PanelState {
         showCurrentNote()
     }
 
+    func pause() {
+        attemptSave { try tracking.pause() }
+    }
+
+    func resume() {
+        attemptSave { try tracking.resume() }
+    }
+
     private func logStopped(_ session: Session) {
         let end = session.end ?? .now
-        let length = Duration.seconds(end.timeIntervalSince(session.start)).formatted(.time(pattern: .hourMinuteSecond))
+        let worked = elapsedTime(start: session.start, end: end, breaks: session.breaks ?? [])
+        let length = Duration.seconds(worked).formatted(.time(pattern: .hourMinuteSecond))
         log.notice("""
             Stopped session \(session.id.uuidString, privacy: .public)
               category: \(categoryName(session.category), privacy: .public)
               start: \(session.start.formatted(date: .abbreviated, time: .standard), privacy: .public)
               end: \(end.formatted(date: .abbreviated, time: .standard), privacy: .public)
               length: \(length, privacy: .public)
+              breaks: \(session.breaks?.count ?? 0, privacy: .public)
               note: \(session.note ?? "(none)", privacy: .public)
               device: \(session.deviceName, privacy: .public)
             """)
